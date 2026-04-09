@@ -1,0 +1,393 @@
+{
+  "name": "02 - AI newsletter digest",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 7
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -752,
+        -112
+      ],
+      "id": "db80a4bd-9ad2-42b9-ad4b-5e3877f70fbe",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "url": "https://techcrunch.com/feed/",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        -432,
+        -352
+      ],
+      "id": "83acf087-a0cd-4808-ba88-f9b815acde2e",
+      "name": "TechCrunch"
+    },
+    {
+      "parameters": {
+        "url": "https://hnrss.org/frontpage",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        -448,
+        -112
+      ],
+      "id": "d64d2e0a-3589-44ba-b3f0-0724750813eb",
+      "name": "Hacker News"
+    },
+    {
+      "parameters": {
+        "url": "https://www.technologyreview.com/feed/",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        -464,
+        208
+      ],
+      "id": "e03d2a4e-ab35-4b5a-a186-85ac123e912c",
+      "name": "MIT Tech Review"
+    },
+    {
+      "parameters": {
+        "numberInputs": 3
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -144,
+        -112
+      ],
+      "id": "eabc19d2-9b58-4a99-b372-49b9188143ac",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "a578c47b-82b2-435b-aae0-0d3e29b6c585",
+              "leftValue": "={{ $json.pubDate }}",
+              "rightValue": "= {{ $now.minus(1, 'day') }}",
+              "operator": {
+                "type": "dateTime",
+                "operation": "after"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        48,
+        -96
+      ],
+      "id": "8ee35ac0-e514-4708-868f-81cfad6ed831",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        592,
+        -144
+      ],
+      "id": "9fc6dddd-756a-4bba-82c7-df96acdd02e1",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=ummarize this article in 2 sentences.\nTitle: {{ $json.title }}\nSource: {{ $json.creator }}\nContent: {{ $json.content }}",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=Summarize the following article in exactly 3 sentences. Be direct and informative — no fluff.\nTitle: {{ $json.title }}\nContent: {{ $json.content }}"
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        784,
+        16
+      ],
+      "id": "0568b2fb-6231-4d84-bc76-f69950d726b8",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "model": "openai/gpt-oss-120b:free",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        864,
+        256
+      ],
+      "id": "296b8a1b-f150-4c71-92d5-7be3db358787",
+      "name": "OpenRouter Chat Model",
+      "credentials": {
+        "openRouterApi": {
+          "id": "QAZoVxqXl8IHksVw",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "maxItems": 5
+      },
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        320,
+        -112
+      ],
+      "id": "ab149b17-3cd6-425e-9559-2ec51fef574e",
+      "name": "Limit"
+    },
+    {
+      "parameters": {
+        "sendTo": "shhth0034@gmail.com",
+        "subject": "={{ $json.subject }}",
+        "message": "={{ $json.html }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1312,
+        -288
+      ],
+      "id": "8e0f15f3-1fed-43d3-b772-1197e6eb6320",
+      "name": "Send a message",
+      "webhookId": "c717e9ef-05d6-42fd-8606-20322d6b5c73",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "2bKlpt2VlvZWvvba",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// HTML Email Builder v2\n// Handles all 3 possible output structures from group-by-category node\n\nfunction formatDate(dateStr) {\n  const d = dateStr ? new Date(dateStr) : new Date();\n  return d.toLocaleDateString(\"en-US\", {\n    weekday: \"long\", year: \"numeric\", month: \"long\", day: \"numeric\",\n  });\n}\n\nfunction escapeHtml(str) {\n  return String(str || \"\")\n    .replace(/&/g, \"&amp;\")\n    .replace(/</g, \"&lt;\")\n    .replace(/>/g, \"&gt;\")\n    .replace(/\"/g, \"&quot;\");\n}\n\nconst CATEGORY_COLORS = {\n  \"AI & Tech\":  \"#4F46E5\",\n  \"Business\":   \"#0F766E\",\n  \"Science\":    \"#7C3AED\",\n  \"World News\": \"#B45309\",\n  \"General\":    \"#4B5563\",\n};\n\nfunction categoryColor(cat) {\n  return CATEGORY_COLORS[cat] || \"#4B5563\";\n}\n\n// Read input - handle all possible structures\nconst allItems = $input.all();\nconst today    = formatDate();\n\nlet categoryList = [];\nconst firstItem = allItems[0]?.json || {};\n\nif (Array.isArray(firstItem.categories) && firstItem.categories.length > 0) {\n  // Single item with categories array\n  categoryList = firstItem.categories;\n} else if (firstItem.category && Array.isArray(firstItem.articles)) {\n  // One item per category (flat)\n  categoryList = allItems.map(item => item.json);\n} else {\n  // Nested categories key per item\n  for (const item of allItems) {\n    const d = item.json;\n    if (Array.isArray(d.categories)) {\n      categoryList.push(...d.categories);\n    }\n  }\n}\n\nconst totalArticles = categoryList.reduce(\n  (sum, cat) => sum + (cat.articles?.length || 0), 0\n);\n\n// Build sections\nlet sectionsHtml = \"\";\n\nfor (const catItem of categoryList) {\n  const category = catItem.category;\n  const articles = catItem.articles || [];\n  if (!articles.length) continue;\n\n  const color = categoryColor(category);\n\n  sectionsHtml += `\n    <tr>\n      <td style=\"padding: 32px 0 12px 0;\">\n        <table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\">\n          <tr>\n            <td style=\"border-left: 4px solid ${color}; padding-left: 14px;\">\n              <span style=\"font-family:Arial,sans-serif;font-size:11px;font-weight:bold;\n                letter-spacing:1.5px;text-transform:uppercase;color:${color};\">\n                ${escapeHtml(category)}\n              </span>\n            </td>\n            <td style=\"font-family:Arial,sans-serif;font-size:11px;color:#9CA3AF;\n              text-align:right;vertical-align:middle;\">\n              ${articles.length} article${articles.length !== 1 ? \"s\" : \"\"}\n            </td>\n          </tr>\n        </table>\n        <div style=\"border-bottom:1px solid #E5E7EB;margin-top:10px;\"></div>\n      </td>\n    </tr>`;\n\n  for (const article of articles) {\n    const title       = escapeHtml(article.title);\n    const link        = article.link || \"#\";\n    const summary     = escapeHtml(article.summary);\n    const author      = escapeHtml(article.author);\n    const publishedAt = article.publishedAt ? formatDate(article.publishedAt) : \"\";\n\n    sectionsHtml += `\n    <tr>\n      <td style=\"padding:16px 0 20px 0;border-bottom:1px solid #F3F4F6;\">\n        <a href=\"${link}\" style=\"font-family:Arial,sans-serif;font-size:16px;\n          font-weight:bold;color:#111827;text-decoration:none;\n          line-height:1.4;display:block;margin-bottom:8px;\">${title}</a>\n        <p style=\"font-family:Arial,sans-serif;font-size:14px;color:#374151;\n          line-height:1.7;margin:0 0 10px 0;\">${summary}</p>\n        <p style=\"font-family:Arial,sans-serif;font-size:12px;color:#9CA3AF;margin:0;\">\n          ${author ? `<strong style=\"color:#6B7280;\">${author}</strong>` : \"\"}\n          ${author && publishedAt ? \" &middot; \" : \"\"}\n          ${publishedAt}\n          &nbsp;&nbsp;\n          <a href=\"${link}\" style=\"color:${color};text-decoration:none;font-size:12px;\">\n            Read full article &rarr;\n          </a>\n        </p>\n      </td>\n    </tr>`;\n  }\n}\n\nconst html = `<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n  <meta charset=\"UTF-8\" />\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\n  <title>Your Daily AI Digest</title>\n</head>\n<body style=\"margin:0;padding:0;background-color:#F9FAFB;\">\n  <table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\"\n         style=\"background-color:#F9FAFB;padding:32px 16px;\">\n    <tr><td align=\"center\">\n      <table width=\"620\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\"\n             style=\"background-color:#FFFFFF;border-radius:8px;\n                    border:1px solid #E5E7EB;max-width:620px;width:100%;\">\n\n        <tr>\n          <td style=\"background-color:#111827;border-radius:8px 8px 0 0;\n                     padding:32px 36px 28px 36px;\">\n            <p style=\"font-family:Arial,sans-serif;font-size:11px;font-weight:bold;\n              letter-spacing:2px;text-transform:uppercase;color:#6B7280;margin:0 0 8px 0;\">\n              Your Daily Digest\n            </p>\n            <h1 style=\"font-family:Arial,sans-serif;font-size:26px;font-weight:bold;\n              color:#FFFFFF;margin:0 0 12px 0;line-height:1.2;\">${today}</h1>\n            <p style=\"font-family:Arial,sans-serif;font-size:13px;color:#9CA3AF;margin:0;\">\n              ${totalArticles} article${totalArticles !== 1 ? \"s\" : \"\"} summarised across\n              ${categoryList.length} categor${categoryList.length !== 1 ? \"ies\" : \"y\"}\n              &mdash; no fluff, just signal.\n            </p>\n          </td>\n        </tr>\n\n        <tr>\n          <td style=\"padding:0 36px 8px 36px;\">\n            <table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\">\n              ${sectionsHtml}\n            </table>\n          </td>\n        </tr>\n\n        <tr>\n          <td style=\"background-color:#F9FAFB;border-top:1px solid #E5E7EB;\n                     border-radius:0 0 8px 8px;padding:24px 36px;text-align:center;\">\n            <p style=\"font-family:Arial,sans-serif;font-size:12px;color:#6B7280;margin:0 0 12px 0;\">\n              Sources: &nbsp;\n              <a href=\"https://techcrunch.com\" style=\"color:#4F46E5;text-decoration:none;\">TechCrunch</a>\n              &nbsp;&middot;&nbsp;\n              <a href=\"https://news.ycombinator.com\" style=\"color:#4F46E5;text-decoration:none;\">Hacker News</a>\n              &nbsp;&middot;&nbsp;\n              <a href=\"https://technologyreview.com\" style=\"color:#4F46E5;text-decoration:none;\">MIT Tech Review</a>\n            </p>\n            <div style=\"border-top:1px solid #E5E7EB;margin:12px 0;\"></div>\n            <p style=\"font-family:Arial,sans-serif;font-size:11px;color:#9CA3AF;margin:0;\">\n              This digest was generated automatically by your n8n workflow. &nbsp;\n              <a href=\"UNSUBSCRIBE_LINK\" style=\"color:#9CA3AF;text-decoration:underline;\">Unsubscribe</a>\n            </p>\n          </td>\n        </tr>\n\n      </table>\n    </td></tr>\n  </table>\n</body>\n</html>`;\n\nreturn [{\n  json: {\n    html,\n    subject:      `Your Daily AI Digest — ${today}`,\n    articleCount: totalArticles,\n    generatedAt:  new Date().toISOString(),\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1088,
+        -288
+      ],
+      "id": "2e823bb4-f36a-4d32-9d0b-2a2dc1d8ee53",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "jsCode": "const articles = $input.all();\n\nconst grouped = {};\n\nfor (const item of articles) {\n  const source = $('Limit').first().json.creator || 'General';\n  const summary = item.json.output || item.json.text || '';\n  const title   = $('Limit').first().json.title || '';\n  const link    = $('Limit').first().json.link  || '';\n\n  if (!grouped[source]) {\n    grouped[source] = [];\n  }\n\n  grouped[source].push({\n    title,\n    link,\n    summary\n  });\n}\n\nconst categories = Object.keys(grouped).map(category => ({\n  category,\n  articles: grouped[category]\n}));\n\nreturn [{ json: { categories } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        -288
+      ],
+      "id": "2c4c09d4-00c0-4739-a224-5d6d93d4dc6d",
+      "name": "Code in JavaScript"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "TechCrunch",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Hacker News",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "MIT Tech Review",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "TechCrunch": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Hacker News": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "MIT Tech Review": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Limit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limit": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "359b9149-d6f7-481a-bbc1-c01da6ff08be",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c41efa408a255413e4cd987144f9bff93870ce1ddc4aa89cd698a65ba1a22b3d"
+  },
+  "id": "mvXm2b8E0p3CNOrR",
+  "tags": []
+}
